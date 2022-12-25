@@ -21,8 +21,6 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const homesCollection = client.db('aircncdb').collection('homes')
-
-    console.log('Database Connected...')
   } finally {
   }
 }
