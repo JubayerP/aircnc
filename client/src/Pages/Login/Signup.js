@@ -1,9 +1,52 @@
-import React from 'react'
-
-import { Link } from 'react-router-dom'
-import PrimaryButton from '../../Components/Button/PrimaryButton'
+import React, { useContext } from 'react';
+import toast from 'react-hot-toast';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import PrimaryButton from '../../Components/Button/PrimaryButton';
+import SmallSpinner from '../../Components/Spinner/SmallSpinner';
+import { AuthContext } from '../../contexts/AuthProvider';
 
 const Signup = () => {
+  const { createUser, updateUserProfile, verifyEmail, loading, setLoading, signInWithGoogle } = useContext(AuthContext);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/';
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    const form = e.target;
+    const name = form.name.value;
+    const image = form.image.files[0];
+    const email = form.email.value;
+    const password = form.password.value;
+
+    const formData = new FormData();
+    formData.append('image', image);
+
+    const url = `https://api.imgbb.com/1/upload?key=${process.env.REACT_APP_imgbb_key}`
+
+    fetch(url, {
+      method: 'POST',
+      body: formData
+    }).then(res => res.json()).then(data => {
+      const photo = data.data.display_url
+      // create user
+      createUser(email, password)
+        .then(result => {
+          updateUserProfile(name, photo)
+            .then(() => { verifyEmail().then(() => toast.success('Please check your email for verification link')); navigate(from, {replace: true})}).catch(err => console.log(err))
+        }).catch(err => {
+          console.log(err.message)
+          setLoading(false)
+        })
+    }).catch(err => console.log(err.message))
+
+  }
+
+  const handleGoogleSignin = () => {
+    signInWithGoogle().then(result => console.log(result.user))
+  }
+
   return (
     <div className='flex justify-center items-center pt-8'>
       <div className='flex flex-col max-w-md p-6 rounded-md sm:p-10 bg-gray-100 text-gray-900'>
@@ -12,6 +55,7 @@ const Signup = () => {
           <p className='text-sm text-gray-400'>Create a new account</p>
         </div>
         <form
+          onSubmit={handleSubmit}
           noValidate=''
           action=''
           className='space-y-12 ng-untouched ng-pristine ng-valid'
@@ -79,7 +123,7 @@ const Signup = () => {
                 type='submit'
                 classes='w-full px-8 py-3 font-semibold rounded-md bg-gray-900 hover:bg-gray-700 hover:text-white text-gray-100'
               >
-                Sign up
+                {loading ? <SmallSpinner />:'Sign up'}
               </PrimaryButton>
             </div>
           </div>
@@ -92,7 +136,7 @@ const Signup = () => {
           <div className='flex-1 h-px sm:w-16 dark:bg-gray-700'></div>
         </div>
         <div className='flex justify-center space-x-4'>
-          <button aria-label='Log in with Google' className='p-3 rounded-sm'>
+          <button onClick={handleGoogleSignin} aria-label='Log in with Google' className='p-3 rounded-sm'>
             <svg
               xmlns='http://www.w3.org/2000/svg'
               viewBox='0 0 32 32'

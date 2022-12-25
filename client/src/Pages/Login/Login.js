@@ -1,8 +1,45 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useContext, useState } from 'react'
+import { toast } from 'react-hot-toast'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import PrimaryButton from '../../Components/Button/PrimaryButton'
+import SmallSpinner from '../../Components/Spinner/SmallSpinner'
+import { AuthContext } from '../../contexts/AuthProvider'
 
 const Login = () => {
+  const { signin, signInWithGoogle, loading, setLoading, resetPassword } = useContext(AuthContext);
+  const [email, setEmail] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/';
+  const handleSubmit = e => {
+    e.preventDefault();
+    const form = e.target;
+    const email = form.email.value;
+    const password = form.password.value;
+    signin(email, password).then(result => {
+      toast.success('Login Success!')
+      navigate(from, {replace: true})
+    }).catch(err => {
+      toast.error(err.message.substring(10))
+      setLoading(false)
+    })
+  }
+
+  const handleGoogleSignin = () => {
+    signInWithGoogle().then(result => console.log(result.user))
+  }
+
+  const handleResetPass = () => {
+    resetPassword(email)
+      .then(() => {
+        toast.success('Please check your email for reset link')
+        setLoading(false)
+      })
+      .catch(err => {
+        toast.error(err.message.substring(10))
+        setLoading(false)
+    })
+  }
   return (
     <div className='flex justify-center items-center pt-8'>
       <div className='flex flex-col max-w-md p-6 rounded-md sm:p-10 bg-gray-100 text-gray-900'>
@@ -13,6 +50,7 @@ const Login = () => {
           </p>
         </div>
         <form
+          onSubmit={handleSubmit}
           noValidate=''
           action=''
           className='space-y-6 ng-untouched ng-pristine ng-valid'
@@ -23,6 +61,7 @@ const Login = () => {
                 Email address
               </label>
               <input
+                onBlur={e => setEmail(e.target.value)}
                 type='email'
                 name='email'
                 id='email'
@@ -54,12 +93,12 @@ const Login = () => {
               type='submit'
               classes='w-full px-8 py-3 font-semibold rounded-md bg-gray-900 hover:bg-gray-700 hover:text-white text-gray-100'
             >
-              Sign in
+              {loading ? <SmallSpinner />:'Sign in'}
             </PrimaryButton>
           </div>
         </form>
         <div className='space-y-1'>
-          <button className='text-xs hover:underline text-gray-400'>
+          <button onClick={handleResetPass} className='text-xs hover:underline text-gray-400'>
             Forgot password?
           </button>
         </div>
@@ -71,7 +110,7 @@ const Login = () => {
           <div className='flex-1 h-px sm:w-16 dark:bg-gray-700'></div>
         </div>
         <div className='flex justify-center space-x-4'>
-          <button aria-label='Log in with Google' className='p-3 rounded-sm'>
+          <button onClick={handleGoogleSignin} aria-label='Log in with Google' className='p-3 rounded-sm'>
             <svg
               xmlns='http://www.w3.org/2000/svg'
               viewBox='0 0 32 32'
