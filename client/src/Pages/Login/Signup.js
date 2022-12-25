@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { setAuthToken } from '../../api/auth';
 import PrimaryButton from '../../Components/Button/PrimaryButton';
 import SmallSpinner from '../../Components/Spinner/SmallSpinner';
 import { AuthContext } from '../../contexts/AuthProvider';
@@ -33,6 +34,7 @@ const Signup = () => {
       // create user
       createUser(email, password)
         .then(result => {
+          setAuthToken(result.user)
           updateUserProfile(name, photo)
             .then(() => { verifyEmail().then(() => toast.success('Please check your email for verification link')); navigate(from, {replace: true})}).catch(err => console.log(err))
         }).catch(err => {
@@ -44,7 +46,7 @@ const Signup = () => {
   }
 
   const handleGoogleSignin = () => {
-    signInWithGoogle().then(result => console.log(result.user))
+    signInWithGoogle().then(result => setAuthToken(result.user))
   }
 
   return (
